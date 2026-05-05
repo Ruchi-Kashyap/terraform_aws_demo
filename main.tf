@@ -18,11 +18,24 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 }
 
+resource "aws_subnet" "public_2" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.3.0/24"
+  availability_zone       = "ap-south-1b"
+  map_public_ip_on_launch = true
+}
+
 # ---------------- Private Subnet ----------------
 resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.private_subnet_cidr
   availability_zone = var.availability_zone
+}
+
+resource "aws_subnet" "private_2" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.4.0/24"
+  availability_zone = "ap-south-1b"
 }
 
 # ---------------- Route Table ----------------
@@ -38,6 +51,11 @@ resource "aws_route" "internet" {
 
 resource "aws_route_table_association" "public_assoc" {
   subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+resource "aws_route_table_association" "public_assoc_2" {
+  subnet_id      = aws_subnet.public_2.id
   route_table_id = aws_route_table.public_rt.id
 }
 
@@ -116,7 +134,10 @@ resource "aws_lb" "alb" {
   name               = "app-alb"
   load_balancer_type = "application"
 
-  subnets         = [aws_subnet.public.id]
+  subnets = [
+  aws_subnet.public.id,
+  aws_subnet.public_2.id
+]
   security_groups = [aws_security_group.alb_sg.id]
 }
 
@@ -147,7 +168,10 @@ resource "aws_lb_listener" "listener" {
 # ---------------- RDS PostgreSQL ----------------
 resource "aws_db_subnet_group" "db_subnet" {
   name       = "db-subnet"
-  subnet_ids = [aws_subnet.private.id]
+  subnet_ids = [
+  aws_subnet.private.id,
+  aws_subnet.private_2.id
+]
 }
 
 resource "aws_db_instance" "postgres" {
