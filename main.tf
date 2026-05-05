@@ -126,6 +126,15 @@ resource "aws_instance" "web" {
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.ec2_sg.id]
 
+  user_data = <<-EOF
+#!/bin/bash
+apt update -y
+apt install -y nginx
+systemctl start nginx
+systemctl enable nginx
+echo "Hello from ALB" > /var/www/html/index.html
+EOF
+
   tags = var.tags
 }
 
